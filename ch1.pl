@@ -22,7 +22,7 @@ binfunc.
 %%%%%%%%%%%%%%
 % Predicates %
 %%%%%%%%%%%%%%%
-type(simple:z_add,[simple:z,simple:z,simple:z]).
+type(simple:z_add, [simple:z,simple:z,simple:z]).
 
 %%%%%%%%%
 % Facts %

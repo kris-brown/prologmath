@@ -1,6 +1,6 @@
 # prologmath
 
-As a programmer studying mathematics (undergraduate abstract algebra), I often am faced with the challenge "Given X, prove Y, using any of the facts you've seen in the book thus far". Let's say the structure of a 'fact' is "Given A, one can prove B" and a knowledge base (KB) is a list of such facts. Automated theorem proving seeks to find the proof given KB, and I am not interested in that. My more modest goal is to just filter KB to identify facts that are possibly relevant for the task at hand. I think of this as a **unification** problem: given an X at hand, identify facts where X matches A (alternatively, pattern match on the result to work backwards, or use both as constraints at once).
+As a programmer studying mathematics (undergraduate abstract algebra), I often am faced with the challenge "Given X, prove Y, using any of the facts you've seen in the book thus far". Let's say the structure of a 'fact' is "Given A, one can prove/construct B" and a knowledge base (KB) is a list of such facts. Automated theorem proving seeks to find the proof given KB, but I am not interested in that. My more modest goal is to just filter KB to identify facts that are possibly relevant for the task at hand. I think of this as a **unification** problem: given an X at hand, identify facts where X matches A (alternatively, pattern match on the result to work backwards, or use both as constraints at once).
 
 This could only give me candidates for the first step in a proof, but I think it would be a helpful tool. In summary, I'm seeking a principled way to take math notes that allows me to query what I've written down in a useful way.
 
@@ -22,16 +22,12 @@ To show a concrete example of what I'm talking about, I tried a naive implementa
 > Given any two sets, one can construct the UNION set and INTERSECTION set
 
 ?- facts([z,n],2). % Relies on having defined z and n as sets (regular prolog declarations)
-> nothing % This "fact" is the construction of a set from two sets, and by giving
-          % an integer pattern for our result pattern match, we no longer got
-          % the previous result
-          % To match an arbitrary set, one can construct one (create an atom and
-          % specify nothing about it other than that it is a set) or just pick
-          % one, such as z.
-
-> **************************************
-> Constructions from two sets (Page 342)
-> Given any two sets, one can construct the UNION set and INTERSECTION set
+> [nothing] % This "fact" is the construction of a set from two sets, and by giving
+            % an integer pattern for our result pattern match, we no longer got
+            % the previous result
+            % To match an arbitrary set, one can construct one (create an atom and
+            % specify nothing about it other than that it is a set) or just pick
+            % one, such as z.
 
 ```
 
