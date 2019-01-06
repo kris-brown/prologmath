@@ -1,10 +1,9 @@
 :- module(fact,
-  [facts/1, allfacts/1, % intended functions to be exposed user
-   fact/4   % to be used by other modules to add to common database
+  [facts/1, facts/2, allfacts/1, allfacts/2, % intended functions to be exposed user
+   fact/5   % to be used by other modules to add to common database
     ]).
 
-%:- multifile pattern/3.
-:- multifile fact/4.
+:- multifile fact/5.
 
 /*
 Launch queries to identify all facts whose pattern matches a given input
@@ -17,24 +16,27 @@ Facts: Give a name, page number, description, and pattern
 
 The fact constructor can be used in other modules to add to knowledge base
 */
+fact("testfact",1,[1],1,"Just a test").
 
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- % Exposed Functions %                                                       %
- % - Input: a list of terms (NO VARIABLES)                                   %
- % - Output: prints a list of facts that have a pattern associated with them %
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% User-exposed functions:
 
- % Note: "facts" prints only facts which incorporate everything in the input list
- facts(X) :-
-   sortlen(X,N,X_no_dups), % remove duplicates (they're irrelevant)
-   allFactMatchN(X_no_dups,N,Res),
-   print_facts(Res).
+% Note: "facts" prints only facts which incorporate everything in the input list
+facts(InputPattern) :-
+ facts(InputPattern, []). % default argument for result is to match on anything
 
- % Returns any fact that can be matched to a subset of input list
- allfacts(X) :-
-   sortlen(X,N,X_no_dups), % remove duplicates (they're irrelevant)
-   fmloop(X_no_dups,N,Res),
-   print_facts(Res).
+facts(InputPattern,ResultPattern) :-
+ sortlen(InputPattern,N,IP_no_dups), % remove duplicates (they're irrelevant)
+ allFactMatchN(IP_no_dups,ResultPattern,N,Res),
+ print_facts(Res).
+
+% Returns any fact that can be matched to a subset of input list
+allfacts(InputPattern) :-
+ allfacts(InputPattern, []).% default argument for result is to match on anything
+
+allfacts(InputPattern,ResultPattern) :-
+ sortlen(InputPattern,N,IP_no_dups), % remove duplicates (they're irrelevant)
+ fmloop(IP_no_dups,ResultPattern,N,Res),
+ print_facts(Res).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Infrastructure for matching arbitrary inputs to facts %
@@ -45,6 +47,7 @@ The fact constructor can be used in other modules to add to knowledge base
 sortlen(X,N,X_no_dups) :-
   length(X,N),
   sort(X,X_no_dups).
+
 % List with some element removed
 del(X,[X|L],L).
 del(X,[Y|L],[Y|L1]) :- del(X,L,L1).
@@ -71,23 +74,25 @@ print_facts([H|T]) :-
 % Does some input match the pattern of some fact of arity N (return fact summary)
 % Would be nice if we could tell which inputs were bound to which elements in the
 % fact pattern.
-factmatchN(X,N,Results) :-
-  perm(X,N,Y),                % Y is some N-length permutation of input
-  fact(FactName,Page,Y,Desc), % any possible fact w/ unifiable pattern
-  Results=[FactName,Page,Desc]. % if successful, return details about the fact
+factmatchN(InPat,ResPat,Len,Results) :-
+  perm(InPat,Len,Perm),                 % Perm is some N-length permutation of input
+  ((ResPat = [],
+   fact(FactName,Page,Perm,_,Desc));
+   fact(FactName,Page,Perm,ResPat,Desc)), % any possible fact w/ unifiable input AND output pattern
+  Results = [FactName,Page,Desc]. % if successful, return details about the fact
 
 % Remove duplicate results  via setof (e.g. input is [2,4,6], we'll have lots
 % of permutations that match a pattern of a single even number)
-allFactMatchN(X,N,Results) :-
-  findall(Res,factmatchN(X,N,Res),DupResults),
+allFactMatchN(X,Y,N,Results) :-
+  findall(Res,factmatchN(X,Y,N,Res),DupResults),
   sort(DupResults,Results).
 
 % FactMatch Loop
-fmloop(_, 0, []) :- !. % we go to infinite loop if we don't CUT here!
-fmloop(X,N,Results) :-
+fmloop(_, _, 0, []) :- !. % we go to infinite loop if we don't CUT here!
+fmloop(X,Y,N,Results) :-
   N1 is N - 1,  % loop variable
   length(X, M), % Sanity check - we shouldn't be calling this with N > M
   N1 <  M,      % (i.e. looking for facts w/ greater arity than our input itself)
-  allFactMatchN(X,N,Res1),   % list of facts of arity N that match input X
-  fmloop(X,N1,Res2),         % list of facts with arity lower than N
+  allFactMatchN(X,Y,N,Res1),   % list of facts of arity N that match input X
+  fmloop(X,Y,N1,Res2),         % list of facts with arity lower than N
   append(Res1,Res2,Results). % concatenate lists
